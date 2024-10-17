@@ -5,46 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Firebase File Upload</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f3f4f6;
     }
-    #upload-form {
-      margin-bottom: 20px;
+
+    h1 {
+      font-size: 2.5em;
+      color: #333;
     }
-    #progress {
+
+    .upload-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 350px;
+    }
+
+    input[type="file"] {
+      padding: 10px;
       margin: 10px 0;
-      height: 20px;
-      width: 100%;
-      background-color: #f3f3f3;
+      border-radius: 5px;
       border: 1px solid #ccc;
+      width: 100%;
     }
+
+    button {
+      padding: 12px 20px;
+      background-color: #007BFF;
+      border: none;
+      color: white;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #progress-container {
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      margin: 15px 0;
+      height: 20px;
+      display: none;
+    }
+
     #progress-bar {
       height: 100%;
       width: 0;
-      background-color: green;
+      background-color: #28a745;
+      border-radius: 5px;
       text-align: center;
       color: white;
+      line-height: 20px;
       font-size: 14px;
+    }
+
+    .link-container {
+      margin-top: 20px;
+    }
+
+    .link-container a {
+      color: #007BFF;
+      text-decoration: none;
+      font-size: 1.1em;
+    }
+
+    .link-container a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
 
-  <h1>Upload File to Firebase Storage</h1>
-  
-  <form id="upload-form">
-    <input type="file" id="fileInput" />
-    <button type="submit">Upload</button>
-  </form>
-  
-  <div id="progress">
-    <div id="progress-bar">0%</div>
+  <h1>Upload Your File</h1>
+  <div class="upload-container">
+    <form id="upload-form">
+      <input type="file" id="fileInput" />
+      <button type="submit">Upload File</button>
+    </form>
+    <div id="progress-container">
+      <div id="progress-bar">0%</div>
+    </div>
+    <div id="fileLink" class="link-container"></div>
   </div>
-  
-  <p id="fileLink"></p>
 
-  <!-- Firebase JS SDK -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-analytics.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-storage.js"></script>
@@ -69,6 +132,7 @@
     // File Upload Logic
     const form = document.getElementById('upload-form');
     const fileInput = document.getElementById('fileInput');
+    const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
     const fileLink = document.getElementById('fileLink');
 
@@ -80,6 +144,9 @@
         const storageRef = storage.ref('uploads/' + file.name);
         const uploadTask = storageRef.put(file);
 
+        // Show progress bar
+        progressContainer.style.display = 'block';
+
         // Track the upload progress
         uploadTask.on('state_changed', 
           (snapshot) => {
@@ -89,17 +156,19 @@
           }, 
           (error) => {
             console.error('Upload failed:', error);
+            progressBar.innerHTML = "Error!";
           }, 
           () => {
             // Upload completed successfully, get the download URL
             uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
               fileLink.innerHTML = `File uploaded successfully! <a href="${downloadURL}" target="_blank">Download ${file.name}</a>`;
               fileLink.style.display = 'block';
+              progressBar.innerHTML = "Upload Complete!";
             });
           }
         );
       } else {
-        alert("Please select a file first!");
+        alert("Please select a file to upload.");
       }
     });
   </script>
