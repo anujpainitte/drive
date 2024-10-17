@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase File Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #upload-form {
+      margin-bottom: 20px;
+    }
+    #progress {
+      margin: 10px 0;
+      height: 20px;
+      width: 100%;
+      background-color: #f3f3f3;
+      border: 1px solid #ccc;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background-color: green;
+      text-align: center;
+      color: white;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Upload File to Firebase Storage</h1>
+  
+  <form id="upload-form">
+    <input type="file" id="fileInput" />
+    <button type="submit">Upload</button>
+  </form>
+  
+  <div id="progress">
+    <div id="progress-bar">0%</div>
+  </div>
+  
+  <p id="fileLink"></p>
+
+  <!-- Firebase JS SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-analytics.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-storage.js"></script>
+
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVzPuxUWWg7CiWxmsd44YSkEklMcgntgY",
+      authDomain: "anuj-drive.firebaseapp.com",
+      projectId: "anuj-drive",
+      storageBucket: "anuj-drive.appspot.com",
+      messagingSenderId: "300832128246",
+      appId: "1:300832128246:web:70441346de8099615980d7",
+      measurementId: "G-6D3YSTXG50"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const analytics = firebase.analytics();
+    const storage = firebase.storage();
+
+    // File Upload Logic
+    const form = document.getElementById('upload-form');
+    const fileInput = document.getElementById('fileInput');
+    const progressBar = document.getElementById('progress-bar');
+    const fileLink = document.getElementById('fileLink');
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const file = fileInput.files[0];
+
+      if (file) {
+        const storageRef = storage.ref('uploads/' + file.name);
+        const uploadTask = storageRef.put(file);
+
+        // Track the upload progress
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            progressBar.style.width = progress + '%';
+            progressBar.innerHTML = Math.floor(progress) + '%';
+          }, 
+          (error) => {
+            console.error('Upload failed:', error);
+          }, 
+          () => {
+            // Upload completed successfully, get the download URL
+            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+              fileLink.innerHTML = `File uploaded successfully! <a href="${downloadURL}" target="_blank">Download ${file.name}</a>`;
+              fileLink.style.display = 'block';
+            });
+          }
+        );
+      } else {
+        alert("Please select a file first!");
+      }
+    });
+  </script>
+
+</body>
+</html>
