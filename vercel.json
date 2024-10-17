@@ -1,10 +1,13 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "api/upload.js",
-        "use": "@vercel/node"
-      }
-    ]
+  "name": "vercel-cloudinary-upload",
+  "version": "1.0.0",
+  "description": "File upload to Cloudinary using Vercel serverless functions",
+  "main": "index.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "formidable": "^2.0.1",  // Add the formidable dependency here
+    "cloudinary": "^1.29.0"  // Cloudinary dependency
   }
-  
+}
