@@ -38,9 +38,9 @@
 <body>
 
   <h1>Upload File to Cloudinary</h1>
-  <form id="upload-form">
-    <input type="file" id="fileInput" required />
-    <input type="text" id="filenameInput" placeholder="Enter desired filename" required />
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" id="fileInput" name="file" required />
+    <input type="text" id="filenameInput" name="filename" placeholder="Enter desired filename" required />
     <button type="submit">Upload File</button>
   </form>
 
@@ -49,50 +49,35 @@
 
   <script>
     const form = document.getElementById('upload-form');
-    const fileInput = document.getElementById('fileInput');
-    const filenameInput = document.getElementById('filenameInput');
     const status = document.getElementById('status');
     const fileLink = document.getElementById('fileLink');
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const file = fileInput.files[0];
-      const filename = filenameInput.value;
 
-      if (file && filename) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Data = reader.result.split(',')[1]; // Get the base64 string
+      const formData = new FormData(form);  // Automatically collects file and filename
 
-          try {
-            status.textContent = 'Uploading...';
+      try {
+        status.textContent = 'Uploading...';
 
-            // Make a request to the Vercel serverless function
-            const response = await fetch('/api/upload', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                data: `data:${file.type};base64,${base64Data}`, // Send base64 data
-                filename: filename,
-              }),
-            });
+        // Make the request to the Vercel serverless function
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,  // Send the form data
+        });
 
-            const result = await response.json();
-            if (response.ok) {
-              fileLink.innerHTML = `File uploaded successfully! <a href="${result.url}" target="_blank">Download ${filename}</a>`;
-              status.textContent = 'Upload Complete!';
-            } else {
-              status.textContent = 'Upload failed!';
-            }
-          } catch (error) {
-            console.error('Error uploading file:', error);
-            status.textContent = 'Error during upload!';
-          }
-        };
+        const result = await response.json();
 
-        reader.readAsDataURL(file); // Read the file as base64
+        if (response.ok) {
+          fileLink.innerHTML = `File uploaded successfully! <a href="${result.url}" target="_blank">Download file</a>`;
+          status.textContent = 'Upload Complete!';
+        } else {
+          console.error('Upload failed:', result.error);
+          status.textContent = 'Upload failed!';
+        }
+      } catch (error) {
+        console.error('Error during upload:', error);
+        status.textContent = 'Error during upload!';
       }
     });
   </script>
