@@ -1,40 +1,56 @@
-// Import Cloudinary SDK
-const cloudinary = require('cloudinary').v2;
+import { v2 as cloudinary } from 'cloudinary';
+import formidable from 'formidable';
+import fs from 'fs';
 
-// Configure Cloudinary with your provided credentials
-cloudinary.config({
-  cloud_name: 'ddw6uldso',
-  api_key: '144957938615992',
-  api_secret: '1LHRU1wIfb_DCEdNCDz9NBaxRDY',
+// Cloudinary configuration
+cloudinary.config({ 
+    cloud_name: 'ddw6uldso', 
+    api_key: '144957938615992', 
+    api_secret: '1LHRU1wIfb_DCEdNCDz9NBaxRDY',  // Provided API Secret
 });
 
+// Disable body parsing for multipart forms (Vercel's serverless function default)
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+// Main function to handle file upload
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { data, filename } = req.body;
+    // Parse the uploaded file using formidable
+    const form = new formidable.IncomingForm();
+    
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        console.error('Error parsing the file', err);
+        return res.status(500).json({ error: 'File parsing error' });
+      }
 
-    // Debugging: Check if the file data and filename were passed correctly
-    if (!data || !filename) {
-      console.error('No data or filename received');
-      return res.status(400).json({ error: 'File data or filename missing' });
-    }
+      const file = files.file;  // Assuming the file input is named "file"
+      const filename = fields.filename;  // Filename entered by the user
+      
+      if (!file || !filename) {
+        return res.status(400).json({ error: 'File or filename is missing' });
+      }
 
-    try {
-      // Upload the file to Cloudinary using the user-defined filename
-      const uploadedResponse = await cloudinary.uploader.upload(data, {
-        public_id: `uploads/${filename}`, // Set the file name in Cloudinary
-      });
+      try {
+        // Upload the file to Cloudinary with the user-specified filename
+        const uploadedResponse = await cloudinary.uploader.upload(file.filepath, {
+          public_id: `uploads/${filename}`,  // Use the user-specified filename
+        });
 
-      console.log('Upload successful:', uploadedResponse); // Debugging: Log Cloudinary response
-
-      // Return the URL of the uploaded file
-      res.status(200).json({ url: uploadedResponse.secure_url });
-    } catch (error) {
-      // More detailed error logging
-      console.error('Upload failed:', error);
-      res.status(500).json({ error: 'Upload failed', details: error.message });
-    }
+        // Return the Cloudinary URL of the uploaded file
+        return res.status(200).json({ url: uploadedResponse.secure_url });
+      } catch (error) {
+        console.error('Cloudinary upload failed:', error);
+        return res.status(500).json({ error: 'Upload failed' });
+      }
+    });
   } else {
-    console.error('Invalid request method:', req.method);
-    res.status(405).json({ error: 'Method not allowed' });
+    // Handle non-POST requests
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
